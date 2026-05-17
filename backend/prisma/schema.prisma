@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Device {
+  id        String          @id @default(uuid())
+  name      String
+  type      String
+  status    String          @default("online")
+  lastSeen  DateTime        @default(now())
+  createdAt DateTime        @default(now())
+  telemetry TelemetryData[]
+}
+
+model TelemetryData {
+  id        Int      @id @default(autoincrement())
+  value     Float
+  unit      String
+  deviceId  String
+  timestamp DateTime @default(now())
+  device    Device   @relation(fields: [deviceId], references: [id])
+}
