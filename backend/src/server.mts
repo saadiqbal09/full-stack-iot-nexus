@@ -6,6 +6,8 @@ import cors from 'cors'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
+import { fetchTelemetry } from './services/weatherService.mts'
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 })
@@ -30,7 +32,12 @@ app.get('/api/devices', async (req, res) => {
   try {
     const devices = await prisma.device.findMany()
 
-    res.json(devices)
+    const telemetry = await fetchTelemetry()
+
+    res.json({
+      devices,
+      telemetry,
+    })
   } catch (error) {
     console.error(error)
 
@@ -61,5 +68,5 @@ app.post('/api/devices', async (req, res) => {
 })
 
 app.listen(5000, () => {
-  console.log('🚀 Server running on port 5000')
+  console.log(' Server running on port 5000')
 })
