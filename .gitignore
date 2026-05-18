@@ -1,5 +1,35 @@
-node_modules/
+# dependencies
+node_modules
+
+# next
+.next
+out
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env
 .env
+.env.local
+
+# prisma
+prisma/dev.db
+
+# docker
+docker-data
+
+# system
 .DS_Store
-dist/
-build/
+Thumbs.db
+
+# vscode
+.vscode
+
+# build
+dist
+build
+
+# cache
+.cache

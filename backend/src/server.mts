@@ -1,47 +1,65 @@
 import 'dotenv/config'
-import express, { type Request, type Response } from 'express';
-import cors from 'cors';
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { PrismaNeon } from '@prisma/adapter-neon';
-import { PrismaClient } from '@prisma/client';
-import ws from 'ws';
 
-// 1. WebSocket config for serverless
-neonConfig.webSocketConstructor = ws;
+import express from 'express'
+import cors from 'cors'
 
-// 2. HARDCODED URL
-const connectionString = process.env.DATABASE_URL!
-// 3. Initialize Pool and Prisma Adapter
-const pool = new Pool({ connectionString });
-const adapter = new PrismaNeon(pool as any);
+import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-// 4. Force Prisma to use ONLY the adapter
-const prisma = new PrismaClient({ adapter });
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+})
 
-const app = express();
-const PORT = 5000;
+const prisma = new PrismaClient({
+  adapter,
+})
 
-app.use(cors());
-app.use(express.json());
+const app = express()
 
-app.get('/api/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
+app.use(cors())
+app.use(express.json())
 
-app.get('/api/devices', async (req: Request, res: Response) => {
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  })
+})
+
+app.get('/api/devices', async (req, res) => {
   try {
-    const devices = await prisma.device.findMany({
-      include: {
-        telemetry: { take: 1, orderBy: { timestamp: 'desc' } }
-      }
-    });
-    res.status(200).json(devices);
-  } catch (error) {
-    console.error("Database error:", error);
-    res.status(500).json({ error: 'Failed to fetch device data' });
-  }
-});
+    const devices = await prisma.device.findMany()
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+    res.json(devices)
+  } catch (error) {
+    console.error(error)
+
+    res.status(500).json({
+      error: 'Database query failed',
+    })
+  }
+})
+
+app.post('/api/devices', async (req, res) => {
+  try {
+    const { name } = req.body
+
+    const device = await prisma.device.create({
+      data: {
+        name,
+      },
+    })
+
+    res.json(device)
+  } catch (error) {
+    console.error(error)
+
+    res.status(500).json({
+      error: 'Failed to create device',
+    })
+  }
+})
+
+app.listen(5000, () => {
+  console.log('🚀 Server running on port 5000')
+})
